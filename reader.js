@@ -2,7 +2,7 @@ const AdmZip = require("adm-zip")
 const fs = require("fs")
 const WebSocket = require("ws")
 const months = ["styczeń", " luty", " marzec", " kwiecień", " maj", " czerwiec", " lipiec", " sierpień", " wrzesień", " październik", " listopad", " grudzień"]
-console.log(__dirname)
+
 const ws = new WebSocket("wss://app.test-udt.pl:5551/licznik")
 ws.onopen = () => {
   ws.send("admin")
@@ -11,18 +11,20 @@ ws.onopen = () => {
   }, 5000)
 }
 const logs = []
-
+let actLog = 0
 ws.addEventListener("message", m => {
-  console.log(m.data)
+
   try {
     const data = JSON.parse(m.data)
     if (data.users != undefined) {
-      logs.unshift({ time: Math.floor(new Date().getTime() / 1000), users: parseFloat(data.users) })
+      // logs.unshift({ time: Math.floor(new Date().getTime() / 1000), users: parseFloat(data.users) })
+      actLog = parseFloat(data.users)
     }
     if (data.uarr != undefined) {
       let startTime = parseFloat(data.now)
       data.uarr.forEach(d => {
         logs.unshift({ time: startTime, users: d })
+        actLog = parseFloat(d)
         startTime++
       })
     }
@@ -31,7 +33,7 @@ ws.addEventListener("message", m => {
   }
 })
 
-const zip = new AdmZip(`${__dirname}/backup/2022- czerwiec.zip`)
+const zip = new AdmZip(`${__dirname}/backup/2022- lipiec.zip`)
 
 zip.forEach(z => {
   let startTime = parseFloat(z.entryName)
@@ -44,5 +46,6 @@ zip.forEach(z => {
 })
 
 setInterval(() => {
+  logs.unshift({ time: Math.floor(new Date().getTime() / 1000), users: actLog })
   console.log(logs[0])
 }, 1000)
