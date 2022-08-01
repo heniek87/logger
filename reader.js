@@ -10,7 +10,39 @@ ws.onopen = () => {
     ws.send("uarr")
   }, 5000)
 }
+const logs = []
+
 ws.addEventListener("message", m => {
   console.log(m.data)
+  try {
+    const data = JSON.parse(m.data)
+    if (data.users != undefined) {
+      logs.unshift({ time: Math.floor(new Date().getTime() / 1000), users: parseFloat(data.users) })
+    }
+    if (data.uarr != undefined) {
+      let startTime = parseFloat(data.now)
+      data.uarr.forEach(d => {
+        logs.unshift({ time: startTime, users: d })
+        startTime++
+      })
+    }
+  } catch (err) {
+
+  }
+})
+
+const zip = new AdmZip(`${__dirname}/backup/2022- czerwiec.zip`)
+
+zip.forEach(z => {
+  let startTime = parseFloat(z.entryName)
+  z.getData().toString().split("|").forEach(d => {
+    logs.unshift({ time: startTime, users: d })
+    startTime++
+
+  })
 
 })
+
+setInterval(() => {
+  console.log(logs[0])
+}, 1000)
